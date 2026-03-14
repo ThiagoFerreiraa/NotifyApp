@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Notificações - ZucroPay</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 450px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .status-box {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 25px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .status-item:not(:last-child) {
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .status-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .status-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .status-value.connected {
+      color: #28a745;
+    }
+
+    .status-value.disconnected {
+      color: #dc3545;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #218838;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .result.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+
+    .result.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+
+    .info-box {
+      background: #e7f1ff;
+      border-left: 4px solid #667eea;
+      padding: 12px;
+      margin-top: 20px;
+      border-radius: 0 8px 8px 0;
+      font-size: 13px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 Teste de Notificações</h1>
+    <p class="subtitle">ZucroPay - Simulador de Vendas</p>
+
+    <div class="status-box">
+      <div class="status-item">
+        <span class="status-label">Status da Inscrição</span>
+        <span id="subscriptionStatus" class="status-value disconnected">Não inscrito</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Total de Inscritos</span>
+        <span id="subscribersCount" class="status-value">0</span>
+      </div>
+    </div>
+
+    <button id="btnSubscribe" class="btn btn-secondary" onclick="subscribeToPush()">
+      🔔 Ativar Notificações
+    </button>
+
+    <hr style="margin: 25px 0; border: none; border-top: 1px solid #e9ecef;">
+
+    <div class="form-group">
+      <label for="amount">💵 Valor da Venda (R$)</label>
+      <input type="number" id="amount" placeholder="150.00" step="0.01" min="0.01" value="150.00">
+    </div>
+
+    <div class="form-group">
+      <label for="quantity">📬 Quantidade de Notificações</label>
+      <input type="number" id="quantity" placeholder="5" min="1" max="50" value="5">
+    </div>
+
+    <button id="btnSend" class="btn btn-primary" onclick="sendNotifications()" disabled>
+      🚀 Enviar Notificações
+    </button>
+
+    <div id="result" class="result"></div>
+
+    <div class="info-box">
+      <strong>Como funciona:</strong><br>
+      1. Clique em "Ativar Notificações" e permita no navegador<br>
+      2. Preencha o valor e quantidade<br>
+      3. Clique em "Enviar Notificações"
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let swRegistration = null;
+
+    // Converte a chave VAPID de base64 para Uint8Array
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    // Atualiza o contador de inscritos
+    async function updateSubscribersCount() {
+      try {
+        const response = await fetch(`${API_URL}/push/subscriptions/count`);
+        const data = await response.json();
+        document.getElementById('subscribersCount').textContent = data.count;
+      } catch (error) {
+        console.error('Erro ao buscar contagem:', error);
+      }
+    }
+
+    // Registra o Service Worker
+    async function registerServiceWorker() {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          swRegistration = await navigator.serviceWorker.register('/sw.js');
+          console.log('Service Worker registrado:', swRegistration);
+          
+          // Verifica se já está inscrito
+          const subscription = await swRegistration.pushManager.getSubscription();
+          if (subscription) {
+            document.getElementById('subscriptionStatus').textContent = 'Inscrito ✓';
+            document.getElementById('subscriptionStatus').classList.remove('disconnected');
+            document.getElementById('subscriptionStatus').classList.add('connected');
+            document.getElementById('btnSubscribe').textContent = '✓ Notificações Ativas';
+            document.getElementById('btnSubscribe').disabled = true;
+            document.getElementById('btnSend').disabled = false;
+          }
+        } catch (error) {
+          console.error('Erro ao registrar Service Worker:', error);
+        }
+      } else {
+        alert('Push notifications não são suportadas neste navegador.');
+      }
+    }
+
+    // Inscreve para receber notificações
+    async function subscribeToPush() {
+      try {
+        // Busca a chave pública da API
+        const response = await fetch(`${API_URL}/push/vapid-public-key`);
+        const { publicKey } = await response.json();
+
+        // Pede permissão e cria subscription
+        const subscription = await swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+
+        // Envia subscription para a API
+        await fetch(`${API_URL}/push/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+
+        document.getElementById('subscriptionStatus').textContent = 'Inscrito ✓';
+        document.getElementById('subscriptionStatus').classList.remove('disconnected');
+        document.getElementById('subscriptionStatus').classList.add('connected');
+        document.getElementById('btnSubscribe').textContent = '✓ Notificações Ativas';
+        document.getElementById('btnSubscribe').disabled = true;
+        document.getElementById('btnSend').disabled = false;
+
+        updateSubscribersCount();
+        showResult('Inscrição realizada com sucesso!', 'success');
+      } catch (error) {
+        console.error('Erro ao inscrever:', error);
+        showResult('Erro ao ativar notificações: ' + error.message, 'error');
+      }
+    }
+
+    // Envia notificações de venda
+    async function sendNotifications() {
+      const amount = parseFloat(document.getElementById('amount').value);
+      const quantity = parseInt(document.getElementById('quantity').value);
+
+      if (!amount || amount <= 0) {
+        showResult('Informe um valor válido!', 'error');
+        return;
+      }
+
+      if (!quantity || quantity <= 0 || quantity > 50) {
+        showResult('Quantidade deve ser entre 1 e 50!', 'error');
+        return;
+      }
+
+      document.getElementById('btnSend').disabled = true;
+      document.getElementById('btnSend').textContent = '⏳ Enviando...';
+
+      try {
+        const response = await fetch(`${API_URL}/push/send-sales`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, quantity })
+        });
+
+        const data = await response.json();
+        showResult(`✅ Enviadas: ${data.totalSent} | ❌ Falhas: ${data.totalFailed}`, 'success');
+      } catch (error) {
+        console.error('Erro ao enviar:', error);
+        showResult('Erro ao enviar notificações: ' + error.message, 'error');
+      } finally {
+        document.getElementById('btnSend').disabled = false;
+        document.getElementById('btnSend').textContent = '🚀 Enviar Notificações';
+      }
+    }
+
+    // Mostra resultado
+    function showResult(message, type) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = message;
+      resultDiv.className = 'result ' + type;
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      registerServiceWorker();
+      updateSubscribersCount();
+    });
+  </script>
+</body>
+</html>
